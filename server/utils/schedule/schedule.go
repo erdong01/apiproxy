@@ -20,7 +20,7 @@ func Init(ctx context.Context) {
 	Schedule.Run(ctx)
 
 	var seedanceTask SeedanceTask
-	Schedule.Add(&seedanceTask, time.Second*10, true)
+	Schedule.Add(&seedanceTask, time.Minute*10, true)
 }
 
 type SeedanceTask struct {
@@ -60,7 +60,7 @@ func (that *SeedanceTask) OnTimer() {
 			}
 			resp, err := client.GetContentGenerationTask(ctx, req)
 			if err != nil {
-				fmt.Printf("获取内容生成任务失败: %v\n", err)
+				// fmt.Printf("获取内容生成任务失败: %v\n", err)
 				continue
 			}
 			if resp.Status != arkruntimeModel.StatusQueued && resp.Status != arkruntimeModel.StatusRunning {
