@@ -49,6 +49,7 @@
    <template #default="scope">{{ getModelName(scope.row.aiModelId) }}</template>
 </el-table-column>
               <el-table-column align="left" label="外部用户key" prop="UserKey" width="300" />
+            <el-table-column align="left" label="用户名" prop="UserName" width="200" />
             <el-table-column align="left" label="供应商密钥" prop="key" width="300" />
 
             <el-table-column align="left" label="拥有tokens数" prop="totalTokens" width="200" />
@@ -107,6 +108,9 @@
       <el-option v-for="item in modelOptions" :key="item.id" :label="item.name + ' (' + item.provider + ' ' + item.version + ')'" :value="item.id" />
     </el-select>
 </el-form-item>
+            <el-form-item label="用户名:" prop="UserName">
+    <el-input v-model="formData.UserName" :clearable="true" placeholder="请输入用户名" />
+</el-form-item>
             <el-form-item label="AI供应商密钥:" prop="key">
     <el-input v-model="formData.key" :clearable="true" placeholder="请输入密钥" />
 </el-form-item>
@@ -138,6 +142,9 @@
 </el-descriptions-item>
                     <el-descriptions-item label="ai模型">
     {{ getModelName(detailForm.aiModelId) }}
+</el-descriptions-item>
+                    <el-descriptions-item label="用户名">
+    {{ detailForm.UserName }}
 </el-descriptions-item>
                     <el-descriptions-item label="密钥">
     {{ detailForm.key }}
@@ -196,6 +203,7 @@ const formData = ref({
             key: '',
             totalTokens: undefined,
             useTokens: '',
+            UserName: '',
         })
 
 
@@ -378,6 +386,7 @@ const closeDialog = () => {
         key: '',
         totalTokens: undefined,
         useTokens: '',
+        UserName: '',
         }
 }
 // 弹窗确定

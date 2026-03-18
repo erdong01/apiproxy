@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
+	"github.com/flipped-aurora/gin-vue-admin/server/lib/apisix"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/ai"
 	aiReq "github.com/flipped-aurora/gin-vue-admin/server/model/ai/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
@@ -43,6 +44,7 @@ func (pqApiKeyApi *PqApiKeyApi) CreatePqApiKey(c *gin.Context) {
 		response.FailWithMessage("创建失败:"+err.Error(), c)
 		return
 	}
+	apisix.POSTConsumers(pqApiKey.UserName, *pqApiKey.Key, *pqApiKey.UserKey)
 	response.OkWithMessage("创建成功", c)
 }
 
@@ -60,12 +62,19 @@ func (pqApiKeyApi *PqApiKeyApi) DeletePqApiKey(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	id := c.Query("id")
-	err := pqApiKeyService.DeletePqApiKey(ctx, id)
+	apiKeyData, err := pqApiKeyService.GetPqApiKey(ctx, id)
+	if err != nil {
+		global.GVA_LOG.Error("数据不存在!", zap.Error(err))
+		response.FailWithMessage("数据不存在:"+err.Error(), c)
+		return
+	}
+	err = pqApiKeyService.DeletePqApiKey(ctx, id)
 	if err != nil {
 		global.GVA_LOG.Error("删除失败!", zap.Error(err))
 		response.FailWithMessage("删除失败:"+err.Error(), c)
 		return
 	}
+	apisix.DELETEConsumers(apiKeyData.UserName)
 	response.OkWithMessage("删除成功", c)
 }
 

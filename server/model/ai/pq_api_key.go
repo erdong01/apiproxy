@@ -17,6 +17,7 @@ type PqApiKey struct {
 	TotalTokens *int64     `json:"totalTokens" form:"totalTokens" gorm:"comment:拥有tokens数;column:total_tokens;"`    //拥有tokens数
 	UseTokens   *string    `json:"useTokens" form:"useTokens" gorm:"comment:已消耗tokens;column:use_tokens;size:255;"` //已消耗tokens
 	UserKey     *string    `gorm:"column:user_key" json:"UserKey"`                                                  //type:string            comment:外部用户key     version:2026-02-18 17:40
+	UserName    string     `gorm:"column:user_name" json:"UserName"`                                                //type:string            comment:                version:2026-02-18 21:21
 }
 
 // TableName pqApiKey表 PqApiKey自定义表名 pq_api_key
