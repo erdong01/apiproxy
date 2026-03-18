@@ -33,8 +33,8 @@ import (
 func main() {
 	// 初始化系统
 	initializeSystem()
-	ctx := context.Background()
-	defer ctx.Done()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	schedule.Init(ctx)
 	// 运行服务器
 	core.RunServer()
