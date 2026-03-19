@@ -9,6 +9,7 @@ import (
 	"github.com/erdong01/kit"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model"
+	"github.com/flipped-aurora/gin-vue-admin/server/model/ai"
 	"github.com/volcengine/volcengine-go-sdk/service/arkruntime"
 	arkruntimeModel "github.com/volcengine/volcengine-go-sdk/service/arkruntime/model"
 )
@@ -29,7 +30,12 @@ type SeedanceTask struct {
 func (that *SeedanceTask) OnTimer() {
 	var limit int = 10
 	var lastID int64 = 0
-
+	var pqAiModel []ai.PqAiModel
+	global.GVA_DB.Model(&ai.PqAiModel{}).Find(&pqAiModel)
+	var pqAiModelMap = make(map[string]ai.PqAiModel, len(pqAiModel))
+	for i := range pqAiModel {
+		pqAiModelMap[*pqAiModel[i].Name] = pqAiModel[i]
+	}
 	for {
 		var aiTaskData []model.AiTask
 		// 使用基于 ID 的游标分页，避免数据变更导致的偏移问题
@@ -71,7 +77,9 @@ func (that *SeedanceTask) OnTimer() {
 				totalTokens := resp.Usage.TotalTokens
 				aiTaskData[i].CompletionTokens = &completionTokens
 				aiTaskData[i].TotalTokens = &totalTokens
-
+				if pqAiModel, ok := pqAiModelMap[resp.Model]; ok {
+					aiTaskData[i].ModelId = pqAiModel.Id
+				}
 				// 安全访问 Error，避免空指针
 				if resp.Error != nil {
 					aiTaskData[i].ErrorMessage = resp.Error.Code + " " + resp.Error.Message
