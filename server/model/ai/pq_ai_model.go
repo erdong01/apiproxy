@@ -64,3 +64,53 @@ func Calculate(model string, contentType string, tokens int64) (price float64) {
 
 	return
 }
+
+type PanQuModelPrice struct {
+	Price float64
+}
+
+var PanQuModelPriceMap = map[string]map[string]PanQuModelPrice{
+	"doubao-seedance-2-0-260128": map[string]PanQuModelPrice{
+		"720p": {
+			Price: 0.994,
+		},
+		"720p_draft_task": {
+			Price: 0.5,
+		},
+		"480p": {
+			Price: 0.462,
+		},
+		"480p_draft_task": {
+			Price: 0.22,
+		},
+	},
+	"doubao-seedance-2-0-fast-260128": map[string]PanQuModelPrice{
+		"720p": {
+			Price: 0.8,
+		},
+		"720p_draft_task": {
+			Price: 0.37,
+		},
+		"480p": {
+			Price: 0.372,
+		},
+		"480p_draft_task": {
+			Price: 0.17,
+		},
+	},
+}
+
+func PanQuModelPriceCalculate(model string, resolution string, draft_task_id string, duration int64) (price float64) {
+	if draft_task_id != "" {
+		model = model + "_draft_task"
+	}
+	if modelPrice, ok := PanQuModelPriceMap[model][resolution]; ok {
+		duration := decimal.NewFromInt(duration)
+		dPrice := decimal.NewFromFloat(modelPrice.Price)
+
+		totalPrice, _ := duration.Mul(dPrice).Truncate(2).Float64()
+		return totalPrice
+	}
+
+	return
+}

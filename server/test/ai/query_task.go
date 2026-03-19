@@ -19,10 +19,15 @@ type ArkTaskResult struct {
 	Status            string
 	ErrorCode         string
 	ErrorMessage      string
-	TotalTokensAmount float64 //tokens 金额
-	Duration          float64
+	TotalTokensAmount float64 //tokens 火山云费用金额
+	Duration          float64 // 时长
+	TotalDuration     float64 // 时长
 	Resolution        string
 	CostPerSecond     string // 每条成本  TotalTokensAmount / Duration
+	DraftTaskId       string
+	PanQuAmount       float64 //盼趣成本
+	AmountDiff        float64 //盼趣成本 和 火山云费用差异 AmountDiff -  TotalTokensAmount
+
 }
 
 func main() {
@@ -71,8 +76,12 @@ func main() {
 	messageColIdx := -1
 	totalTokensAmountIdx := -1
 	durationColIdx := -1
+	totalDurationColIdx := -1
 	resolutionColIdx := -1
 	costPerSecondColIdx := -1
+	panQuAmountColIdx := -1
+	amountDiffColIdx := -1
+	hasReferenceVideoColIdx := -1
 
 	// 查找列索引
 	for i, colCell := range headerRow {
@@ -106,11 +115,23 @@ func main() {
 		if hdr == "duration" || strings.Contains(hdr, "duration") {
 			durationColIdx = i
 		}
+		if hdr == "total_duration" || hdr == "totalduration" {
+			totalDurationColIdx = i
+		}
 		if hdr == "resolution" || strings.Contains(hdr, "resolution") {
 			resolutionColIdx = i
 		}
 		if hdr == "cost_per_second" || strings.Contains(hdr, "cost_per_second") {
 			costPerSecondColIdx = i
+		}
+		if hdr == "pan_qu_amount" {
+			panQuAmountColIdx = i
+		}
+		if hdr == "amount_diff" {
+			amountDiffColIdx = i
+		}
+		if hdr == "has_reference_video" {
+			hasReferenceVideoColIdx = i
 		}
 	}
 
@@ -143,6 +164,10 @@ func main() {
 		durationColIdx = len(headerRow)
 		headerRow = append(headerRow, "duration")
 	}
+	if totalDurationColIdx == -1 {
+		totalDurationColIdx = len(headerRow)
+		headerRow = append(headerRow, "total_duration")
+	}
 	if resolutionColIdx == -1 {
 		resolutionColIdx = len(headerRow)
 		headerRow = append(headerRow, "resolution")
@@ -150,6 +175,18 @@ func main() {
 	if costPerSecondColIdx == -1 {
 		costPerSecondColIdx = len(headerRow)
 		headerRow = append(headerRow, "cost_per_second")
+	}
+	if panQuAmountColIdx == -1 {
+		panQuAmountColIdx = len(headerRow)
+		headerRow = append(headerRow, "pan_qu_amount")
+	}
+	if amountDiffColIdx == -1 {
+		amountDiffColIdx = len(headerRow)
+		headerRow = append(headerRow, "amount_diff")
+	}
+	if hasReferenceVideoColIdx == -1 {
+		hasReferenceVideoColIdx = len(headerRow)
+		headerRow = append(headerRow, "has_reference_video")
 	}
 	rows[0] = headerRow
 
@@ -188,8 +225,8 @@ func main() {
 
 		// 满足条件直接跳过查询接口
 		if (hasAmount && hasDuration && hasResolution && hasCost) || isFailed {
-			fmt.Printf("Task ID: %s (Row %d) 已有数据或已失败，跳过查询，直接同步...\n", taskId, rIdx+1)
-			continue
+			// fmt.Printf("Task ID: %s (Row %d) 已有数据或已失败，跳过查询，直接同步...\n", taskId, rIdx+1)
+			// continue
 		}
 
 		fmt.Printf("正在查询 Task ID: %s (Row %d)...\n", taskId, rIdx+1)
@@ -225,11 +262,23 @@ func main() {
 		if durationColIdx > maxIdx {
 			maxIdx = durationColIdx
 		}
+		if totalDurationColIdx > maxIdx {
+			maxIdx = totalDurationColIdx
+		}
 		if resolutionColIdx > maxIdx {
 			maxIdx = resolutionColIdx
 		}
 		if costPerSecondColIdx > maxIdx {
 			maxIdx = costPerSecondColIdx
+		}
+		if panQuAmountColIdx > maxIdx {
+			maxIdx = panQuAmountColIdx
+		}
+		if amountDiffColIdx > maxIdx {
+			maxIdx = amountDiffColIdx
+		}
+		if hasReferenceVideoColIdx > maxIdx {
+			maxIdx = hasReferenceVideoColIdx
 		}
 
 		for len(row) <= maxIdx {
@@ -252,6 +301,9 @@ func main() {
 		if res.Duration > 0 {
 			row[durationColIdx] = strconv.FormatFloat(res.Duration, 'f', 2, 64)
 		}
+		if res.TotalDuration > 0 {
+			row[totalDurationColIdx] = strconv.FormatFloat(res.TotalDuration, 'f', 2, 64)
+		}
 		if res.Resolution != "" {
 			row[resolutionColIdx] = res.Resolution
 		}
@@ -269,6 +321,15 @@ func main() {
 		if costPerSec > 0 {
 			res.CostPerSecond = strconv.FormatFloat(costPerSec, 'f', 6, 64)
 			row[costPerSecondColIdx] = res.CostPerSecond
+		}
+		if res.PanQuAmount > 0 {
+			row[panQuAmountColIdx] = strconv.FormatFloat(res.PanQuAmount, 'f', 6, 64)
+		}
+		row[amountDiffColIdx] = strconv.FormatFloat(res.AmountDiff, 'f', 6, 64)
+		if strings.TrimSpace(res.DraftTaskId) != "" {
+			row[hasReferenceVideoColIdx] = "是"
+		} else {
+			row[hasReferenceVideoColIdx] = "否"
 		}
 
 		rows[rIdx] = row
@@ -363,7 +424,7 @@ func main() {
 			}
 		}
 
-		appendCols := []string{"completion_tokens", "total_tokens", "status", "code", "message", "total_tokens_amount", "duration", "resolution", "cost_per_second"}
+		appendCols := []string{"completion_tokens", "total_tokens", "status", "code", "message", "total_tokens_amount", "duration", "total_duration", "resolution", "cost_per_second", "pan_qu_amount", "amount_diff", "has_reference_video"}
 		pqColMap := make(map[string]int)
 		for _, colName := range appendCols {
 			idx := -1
@@ -411,8 +472,12 @@ func main() {
 					safeAssign(pqColMap["message"], messageColIdx)
 					safeAssign(pqColMap["total_tokens_amount"], totalTokensAmountIdx)
 					safeAssign(pqColMap["duration"], durationColIdx)
+					safeAssign(pqColMap["total_duration"], totalDurationColIdx)
 					safeAssign(pqColMap["resolution"], resolutionColIdx)
 					safeAssign(pqColMap["cost_per_second"], costPerSecondColIdx)
+					safeAssign(pqColMap["pan_qu_amount"], panQuAmountColIdx)
+					safeAssign(pqColMap["amount_diff"], amountDiffColIdx)
+					safeAssign(pqColMap["has_reference_video"], hasReferenceVideoColIdx)
 
 					pqRows[i] = row
 					pqUpdates++
@@ -443,6 +508,76 @@ func main() {
 			fmt.Println("没有行同步到 pq_score_log_202603182351.csv。")
 		}
 	}
+}
+
+func parseDurationValue(v interface{}) (float64, bool) {
+	switch val := v.(type) {
+	case float64:
+		return val, true
+	case float32:
+		return float64(val), true
+	case int:
+		return float64(val), true
+	case int64:
+		return float64(val), true
+	case string:
+		if parsed, err := strconv.ParseFloat(val, 64); err == nil {
+			return parsed, true
+		}
+	}
+	return 0, false
+}
+
+func extractDurationFromTaskData(data map[string]interface{}) float64 {
+	if durRaw, ok := data["duration"]; ok && durRaw != nil {
+		if dur, ok := parseDurationValue(durRaw); ok {
+			return dur
+		}
+	}
+	if nested, ok := data["data"].(map[string]interface{}); ok {
+		if durRaw, ok := nested["duration"]; ok && durRaw != nil {
+			if dur, ok := parseDurationValue(durRaw); ok {
+				return dur
+			}
+		}
+	}
+	return 0
+}
+
+func queryTaskDuration(taskId, apiKey string) (float64, error) {
+	url := fmt.Sprintf("https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/%s", taskId)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	if apiKey != "" {
+		req.Header.Set("Authorization", "Bearer "+apiKey)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+
+	if resp.StatusCode != 200 {
+		return 0, fmt.Errorf("HTTP 状态码错误: %d, 返回内容: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var data map[string]interface{}
+	if err := json.Unmarshal(bodyBytes, &data); err != nil {
+		return 0, err
+	}
+
+	return extractDurationFromTaskData(data), nil
 }
 
 // queryArkTask 调用 Volcengine Ark 获取任务信息
@@ -485,6 +620,10 @@ func queryArkTask(taskId, apiKey string) (*ArkTaskResult, error) {
 		res.Status = s
 	}
 
+	if draftTaskId, ok := data["draft_task_id"].(string); ok {
+		res.DraftTaskId = draftTaskId
+	}
+
 	if errMap, ok := data["error"].(map[string]interface{}); ok {
 		if c, ok := errMap["code"].(string); ok {
 			res.ErrorCode = c
@@ -524,26 +663,12 @@ func queryArkTask(taskId, apiKey string) (*ArkTaskResult, error) {
 
 		if modelStr, ok := data["model"].(string); ok {
 			res.TotalTokensAmount = ai.Calculate(modelStr, model, totalTokens)
+
 		}
 	}
 
-	// 直接在一级字段获取 duration 和 resolution
-	if durRaw, ok := data["duration"]; ok && durRaw != nil {
-		switch v := durRaw.(type) {
-		case float64:
-			res.Duration = v
-		case float32:
-			res.Duration = float64(v)
-		case int:
-			res.Duration = float64(v)
-		case int64:
-			res.Duration = float64(v)
-		case string:
-			if parsed, err := strconv.ParseFloat(v, 64); err == nil {
-				res.Duration = parsed
-			}
-		}
-	}
+	res.Duration = extractDurationFromTaskData(data)
+	res.TotalDuration = res.Duration
 	if resRaw, ok := data["resolution"]; ok && resRaw != nil {
 		if v, ok := resRaw.(string); ok {
 			res.Resolution = v
@@ -555,22 +680,6 @@ func queryArkTask(taskId, apiKey string) (*ArkTaskResult, error) {
 	// 兼容如果它们被包裹在 data 这个字段内的情况
 	if data["data"] != nil {
 		if d, ok := data["data"].(map[string]interface{}); ok {
-			if durRaw, ok := d["duration"]; ok && durRaw != nil && res.Duration == 0 {
-				switch v := durRaw.(type) {
-				case float64:
-					res.Duration = v
-				case float32:
-					res.Duration = float64(v)
-				case int:
-					res.Duration = float64(v)
-				case int64:
-					res.Duration = float64(v)
-				case string:
-					if parsed, err := strconv.ParseFloat(v, 64); err == nil {
-						res.Duration = parsed
-					}
-				}
-			}
 			if resRaw, ok := d["resolution"]; ok && resRaw != nil && res.Resolution == "" {
 				if v, ok := resRaw.(string); ok {
 					res.Resolution = v
@@ -580,6 +689,12 @@ func queryArkTask(taskId, apiKey string) (*ArkTaskResult, error) {
 			}
 		}
 	}
-
+	if strings.TrimSpace(res.DraftTaskId) != "" {
+		if draftDuration, err := queryTaskDuration(res.DraftTaskId, apiKey); err == nil && draftDuration > 0 {
+			res.TotalDuration = res.Duration + draftDuration
+		}
+	}
+	res.PanQuAmount = ai.PanQuModelPriceCalculate(data["model"].(string), res.Resolution, res.DraftTaskId, int64(res.Duration))
+	res.AmountDiff = res.PanQuAmount - res.TotalTokensAmount
 	return res, nil
 }
