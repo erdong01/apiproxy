@@ -46,12 +46,13 @@ var ModelPriceMap = map[string]map[string]ModelPrice{
 		"image_url": {
 			Price: 0.037, //图文文本 千tokens  价格
 		},
-		"draft_task": {
+		"draft_task": { // 有参考视频
 			Price: 0.022, //参考视频 千tokens  价格
 		},
 	},
 }
 
+// 计算每秒平均成本
 func Calculate(model string, contentType string, tokens int64) (price float64) {
 	if modelPrice, ok := ModelPriceMap[model][contentType]; ok {
 		dTokens := decimal.NewFromInt(tokens)
