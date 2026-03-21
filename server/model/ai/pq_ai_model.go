@@ -30,24 +30,24 @@ type ModelPrice struct {
 var ModelPriceMap = map[string]map[string]ModelPrice{
 	"doubao-seedance-2-0-260128": map[string]ModelPrice{
 		"text": {
-			Price: 0.046,
+			Price: 0.046, //文本 千tokens  价格
 		},
 		"image_url": {
-			Price: 0.046,
+			Price: 0.046, //图文文本 千tokens  价格
 		},
 		"draft_task": {
-			Price: 0.046,
+			Price: 0.028, //参考视频 千tokens  价格
 		},
 	},
 	"doubao-seedance-2-0-fast-260128": map[string]ModelPrice{
 		"text": {
-			Price: 0.037,
+			Price: 0.037, //文本 千tokens  价格
 		},
 		"image_url": {
-			Price: 0.037,
+			Price: 0.037, //图文文本 千tokens  价格
 		},
 		"draft_task": {
-			Price: 0.022,
+			Price: 0.022, //参考视频 千tokens  价格
 		},
 	},
 }
