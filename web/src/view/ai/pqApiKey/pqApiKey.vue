@@ -32,7 +32,7 @@
         >
         <el-table-column type="selection" width="55" />
         
-            <el-table-column align="left" label="id字段" prop="id" width="120" />
+            <!-- <el-table-column align="left" label="id字段" prop="id" width="120" /> -->
 <!-- 
             <el-table-column align="left" label="updatedAt字段" prop="updatedAt" width="180">
    <template #default="scope">{{ formatDate(scope.row.updatedAt) }}</template>
@@ -45,11 +45,12 @@
 </el-table-column> -->
             <!-- <el-table-column align="left" label="用户id" prop="userId" width="120" /> -->
 
-            <el-table-column align="left" label="ai模型" prop="aiModelId" width="350">
+            <!-- <el-table-column align="left" label="ai模型" prop="aiModelId" width="350">
    <template #default="scope">{{ getModelName(scope.row.aiModelId) }}</template>
-</el-table-column>
+</el-table-column> -->
+  <el-table-column align="left" label="用户名" prop="UserName" width="200" />
               <el-table-column align="left" label="外部用户key" prop="UserKey" width="300" />
-            <el-table-column align="left" label="用户名" prop="UserName" width="200" />
+          
             <el-table-column align="left" label="供应商密钥" prop="key" width="300" />
 
             <el-table-column align="left" label="拥有tokens数" prop="totalTokens" width="200" />
@@ -103,11 +104,11 @@
             <!-- <el-form-item label="用户id:" prop="userId">
     <el-input v-model.number="formData.userId" :clearable="true" placeholder="请输入用户id" />
 </el-form-item> -->
-            <el-form-item label="ai模型:" prop="aiModelId">
+            <!-- <el-form-item label="ai模型:" prop="aiModelId">
     <el-select v-model="formData.aiModelId" :clearable="true" placeholder="请选择ai模型" style="width:100%">
       <el-option v-for="item in modelOptions" :key="item.id" :label="item.name + ' (' + item.provider + ' ' + item.version + ')'" :value="item.id" />
     </el-select>
-</el-form-item>
+</el-form-item> -->
             <el-form-item label="用户名:" prop="UserName">
     <el-input v-model="formData.UserName" :clearable="true" placeholder="请输入用户名" />
 </el-form-item>

@@ -32,35 +32,13 @@
         >
         <el-table-column type="selection" width="55" />
             <el-table-column align="left" label="id" prop="id" width="120" />
-            <!-- <el-table-column align="left" label="创建时间" prop="createdAt" width="180">
-   <template #default="scope">{{ formatDate(scope.row.createdAt) }}</template>
-</el-table-column>
-            <el-table-column align="left" label="更新时间" prop="updatedAt" width="180">
-   <template #default="scope">{{ formatDate(scope.row.updatedAt) }}</template>
-</el-table-column>
-            <el-table-column align="left" label="deletedAt字段" prop="deletedAt" width="180">
-   <template #default="scope">{{ formatDate(scope.row.deletedAt) }}</template>
-</el-table-column> -->
-            <el-table-column align="left" label="供应商任务id" prop="generateTaskId" width="120" />
-            <!-- <el-table-column align="left" label="用户id" prop="userId" width="120" /> -->
-            <el-table-column align="left" label="ai模型id" prop="modelId" width="120" />
+            <el-table-column align="left" label="任务id" prop="generateTaskId" width="120" />
+            <el-table-column align="left" label="模型" prop="model" width="220" />
             <el-table-column align="left" label="状态" prop="status" width="120" />
-            <!-- <el-table-column label="存储原始生成参数 (如 seed, motion_bucket_id 等)" prop="params" width="200">
-    <template #default="scope">
-        [JSON]
-    </template>
-</el-table-column> -->
             <el-table-column align="left" label="输出视频花费的 token 数" prop="completionTokens" width="120" />
             <el-table-column align="left" label="本次请求消耗的总 token 数" prop="totalTokens" width="120" />
             <el-table-column align="left" label="key字段" prop="key" width="120" />
             <el-table-column align="left" label="失败原因" prop="errorMessage" width="120" />
-        <!-- <el-table-column align="left" label="操作" fixed="right" :min-width="appStore.operateMinWith">
-            <template #default="scope">
-            <el-button  type="primary" link class="table-button" @click="getDetails(scope.row)"><el-icon style="margin-right: 5px"><InfoFilled /></el-icon>查看</el-button>
-            <el-button  type="primary" link icon="edit" class="table-button" @click="updatePqAiTaskFunc(scope.row)">编辑</el-button>
-            <el-button   type="primary" link icon="delete" @click="deleteRow(scope.row)">删除</el-button>
-            </template>
-        </el-table-column> -->
         </el-table>
         <div class="gva-pagination">
             <el-pagination

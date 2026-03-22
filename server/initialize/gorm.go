@@ -35,6 +35,7 @@ func Gorm() *gorm.DB {
 }
 
 func RegisterTables() {
+	return
 	if global.GVA_CONFIG.System.DisableAutoMigrate {
 		global.GVA_LOG.Info("auto-migrate is disabled, skipping table registration")
 		return

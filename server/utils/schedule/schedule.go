@@ -2,6 +2,7 @@ package schedule
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"time"
@@ -30,12 +31,8 @@ type SeedanceTask struct {
 func (that *SeedanceTask) OnTimer() {
 	var limit int = 10
 	var lastID int64 = 0
-	var pqAiModel []ai.PqAiModel
-	global.GVA_DB.Model(&ai.PqAiModel{}).Find(&pqAiModel)
-	var pqAiModelMap = make(map[string]ai.PqAiModel, len(pqAiModel))
-	for i := range pqAiModel {
-		pqAiModelMap[*pqAiModel[i].Name] = pqAiModel[i]
-	}
+	modelPrice := ai.ModelPriceInit()
+
 	for {
 		var aiTaskData []model.AiTask
 		// 使用基于 ID 的游标分页，避免数据变更导致的偏移问题
@@ -52,11 +49,10 @@ func (that *SeedanceTask) OnTimer() {
 		if len(aiTaskData) == 0 {
 			break
 		}
-
 		for i := range aiTaskData {
 			// 记录当前处理的最大 ID，用于下一页游标
-			if aiTaskData[i].Id != nil && *aiTaskData[i].Id > lastID {
-				lastID = *aiTaskData[i].Id
+			if aiTaskData[i].Id != 0 && aiTaskData[i].Id > lastID {
+				lastID = aiTaskData[i].Id
 			}
 
 			client := arkruntime.NewClientWithApiKey(aiTaskData[i].Key)
@@ -70,21 +66,40 @@ func (that *SeedanceTask) OnTimer() {
 				continue
 			}
 			if resp.Status != arkruntimeModel.StatusQueued && resp.Status != arkruntimeModel.StatusRunning {
+				//模型id
+				aiTaskData[i].Model = resp.Model
 				aiTaskData[i].Status = resp.Status
-
-				// Usage 是值类型，直接赋值；需要转为 *int
-				completionTokens := resp.Usage.CompletionTokens
-				totalTokens := resp.Usage.TotalTokens
-				aiTaskData[i].CompletionTokens = &completionTokens
-				aiTaskData[i].TotalTokens = &totalTokens
-				if pqAiModel, ok := pqAiModelMap[resp.Model]; ok {
-					aiTaskData[i].ModelId = pqAiModel.Id
+				aiTaskData[i].TaskCreatedAt = resp.CreatedAt
+				aiTaskData[i].TaskUpdatedAt = resp.UpdatedAt
+				aiTaskData[i].CompletionTokens = int64(resp.Usage.CompletionTokens)
+				aiTaskData[i].TotalTokens = int64(resp.Usage.TotalTokens)
+				if content, err := json.Marshal(resp.Content); err == nil {
+					aiTaskData[i].Content = content
 				}
+				aiTaskData[i].Seed = resp.Seed
+				aiTaskData[i].Resolution = resp.Resolution
+				aiTaskData[i].Ratio = resp.Ratio
+				aiTaskData[i].Duration = resp.Duration
+				aiTaskData[i].Frames = resp.Frames
+				aiTaskData[i].FramesPerSecond = resp.FramesPerSecond
+				aiTaskData[i].GenerateAudio = resp.GenerateAudio
+				aiTaskData[i].Draft = resp.Draft
+				aiTaskData[i].DraftTaskId = resp.DraftTaskID
+				aiTaskData[i].ServiceTier = resp.ServiceTier
+				aiTaskData[i].ExecutionExpiresAfter = resp.ExecutionExpiresAfter
 				// 安全访问 Error，避免空指针
 				if resp.Error != nil {
-					aiTaskData[i].ErrorMessage = resp.Error.Code + " " + resp.Error.Message
+					aiTaskData[i].ErrorMessage = resp.Error.Message
+					aiTaskData[i].ErrorCode = resp.Error.Code
 				}
-
+				if resp.Usage.TotalTokens > 0 && resp.Resolution != nil && resp.Duration != nil {
+					if price, ok := ai.FindModelPrice(
+						modelPrice,
+						&resp,
+					); ok {
+						aiTaskData[i].VendorAmount, aiTaskData[i].RetailAmount = price.Calculate(int64(resp.Usage.TotalTokens), *resp.Duration)
+					}
+				}
 				if err := global.GVA_DB.Model(&model.AiTask{}).
 					Where("id = ?", aiTaskData[i].Id).
 					Updates(&aiTaskData[i]).Error; err != nil {
