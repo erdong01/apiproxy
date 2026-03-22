@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/erdong01/kit/httpClient"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
@@ -18,8 +20,25 @@ func Init() {
 	h.Set("X-API-KEY", cfg.ApiKey)
 	client.Header = h
 }
-func DELETEConsumers(username string) {
-	client.SetMethod("DELETE").Do()
+
+func DELETEConsumers(username string) error {
+	cfg := global.GVA_CONFIG.Apisix
+	deleteURL := strings.TrimRight(cfg.Url, "/") + "/" + url.PathEscape(username)
+
+	deleteClient := httpClient.New(deleteURL)
+	h := make(http.Header)
+	h.Set("X-API-KEY", cfg.ApiKey)
+	deleteClient.Header = h
+
+	res := deleteClient.SetMethod(http.MethodDelete).Do()
+	if res.Err != nil {
+		return res.Err
+	}
+	if res.StatusCode >= 400 {
+		return fmt.Errorf("apisix delete consumer failed: %s - %s", res.Status, string(res.ResponseBody))
+	}
+
+	return nil
 }
 
 func POSTConsumers(username, apiKey, userKey string) error {

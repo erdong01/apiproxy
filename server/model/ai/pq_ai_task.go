@@ -16,7 +16,7 @@ type PqAiTask struct {
 	DeletedAt             gorm.DeletedAt `gorm:"column:deleted_at" json:"deletedAt"`                          //type:gorm.DeletedAt   comment:                                                                          version:2026-02-21 12:58
 	GenerateTaskId        string         `gorm:"column:generate_task_id" json:"generateTaskId"`               //type:string           comment:供应商任务id                                                              version:2026-02-21 12:58
 	UserId                int64          `gorm:"column:user_id" json:"userId"`                                //type:int64            comment:用户id                                                                    version:2026-02-21 12:58
-	ModelId               int64          `gorm:"column:model_id" json:"modelId"`                              //type:int64            comment:ai模型id                                                                  version:2026-02-21 12:58
+	Model                 string         `gorm:"column:model" json:"model"`                                   //type:int64            comment:ai模型id                                                                  version:2026-02-21 12:58
 	Status                string         `gorm:"column:status" json:"status"`                                 //type:string           comment:状态                                                                      version:2026-02-21 12:58
 	TaskCreatedAt         int64          `gorm:"column:task_created_at" json:"taskCreatedAt"`                 //type:int64            comment:任务创建时间的 Unix 时间戳（秒）。                                        version:2026-02-21 12:58
 	TaskUpdatedAt         int64          `gorm:"column:task_updated_at" json:"taskUpdatedAt"`                 //type:int64            comment:任务当前状态更新时间的 Unix 时间戳（秒）。                                version:2026-02-21 12:58
@@ -26,7 +26,7 @@ type PqAiTask struct {
 	Ratio                 string         `gorm:"column:ratio" json:"ratio"`                                   //type:string           comment:生成视频的宽高比。                                                        version:2026-02-21 12:58
 	Duration              int            `gorm:"column:duration" json:"duration"`                             //type:int              comment:生成视频的时长，单位：秒。                                                version:2026-02-21 12:58
 	Frames                int            `gorm:"column:frames" json:"frames"`                                 //type:int              comment:生成视频的帧数。                                                          version:2026-02-21 12:58
-	Framespersecond       int            `gorm:"column:framespersecond" json:"framespersecond"`               //type:int              comment:生成视频的帧率。                                                          version:2026-02-21 12:58
+	FramesPerSecond       int            `gorm:"column:frames_per_second;" json:"framesPerSecond"`            //type:int              comment:生成视频的帧率。                                                          version:2026-02-22 09:26
 	GenerateAudio         bool           `gorm:"column:generate_audio" json:"generateAudio"`                  //type:bool             comment:生成的视频是否包含与画面同步的声音。仅 Seedance 1.5 pro 会返回该参数。    version:2026-02-21 12:58
 	Draft                 bool           `gorm:"column:draft" json:"draft"`                                   //type:bool             comment:生成的视频是否为 Draft 视频。仅 Seedance 1.5 pro 会返回该参数。           version:2026-02-21 12:58
 	DraftTaskId           string         `gorm:"column:draft_task_id" json:"draftTaskId"`                     //type:string           comment:Draft 视频任务 ID。基于 Draft 视频生成正式视频时，会返回该参数。          version:2026-02-21 12:58
@@ -38,6 +38,9 @@ type PqAiTask struct {
 	TotalTokens           int64          `gorm:"column:total_tokens" json:"totalTokens"`                      //type:int64            comment:本次请求消耗的总 token 数                                                 version:2026-02-21 12:58
 	Key                   string         `gorm:"column:key" json:"key"`                                       //type:string           comment:供应商key                                                                 version:2026-02-21 12:58
 	RequestId             string         `gorm:"column:request_id" json:"requestId"`                          //type:string           comment:                                                                          version:2026-02-21 12:58
+	VendorAmount          float64        `gorm:"column:vendor_amount;" json:"vendorAmount"`                   //type:float64          comment:成本                                                                      version:2026-02-22 09:26
+	RetailAmount          float64        `gorm:"column:retail_amount;" json:"retailAmount"`                   //type:float64          comment:零售                                                                      version:2026-02-22 09:26
+
 }
 
 // TableName pqAiTask表 PqAiTask自定义表名 pq_ai_task

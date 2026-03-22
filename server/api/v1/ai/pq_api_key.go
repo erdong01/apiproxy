@@ -74,7 +74,9 @@ func (pqApiKeyApi *PqApiKeyApi) DeletePqApiKey(c *gin.Context) {
 		response.FailWithMessage("删除失败:"+err.Error(), c)
 		return
 	}
-	apisix.DELETEConsumers(apiKeyData.UserName)
+	if err := apisix.DELETEConsumers(apiKeyData.UserName); err != nil {
+		global.GVA_LOG.Error("删除 APISIX consumer 失败!", zap.Error(err), zap.String("username", apiKeyData.UserName))
+	}
 	response.OkWithMessage("删除成功", c)
 }
 
@@ -125,6 +127,17 @@ func (pqApiKeyApi *PqApiKeyApi) UpdatePqApiKey(c *gin.Context) {
 		response.FailWithMessage("更新失败:"+err.Error(), c)
 		return
 	}
+
+	if pqApiKey.Status == 1 {
+		if err := apisix.POSTConsumers(pqApiKey.UserName, *pqApiKey.Key, *pqApiKey.UserKey); err != nil {
+			global.GVA_LOG.Error("创建/更新 APISIX consumer 失败!", zap.Error(err), zap.String("username", pqApiKey.UserName))
+		}
+	} else if pqApiKey.Status == 2 {
+		if err := apisix.DELETEConsumers(pqApiKey.UserName); err != nil {
+			global.GVA_LOG.Error("删除 APISIX consumer 失败!", zap.Error(err), zap.String("username", pqApiKey.UserName))
+		}
+	}
+
 	response.OkWithMessage("更新成功", c)
 }
 

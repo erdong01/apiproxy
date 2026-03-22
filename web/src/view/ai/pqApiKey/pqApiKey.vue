@@ -6,6 +6,12 @@
 
         <template v-if="showAllQuery">
           <!-- 将需要控制显示状态的查询条件添加到此范围内 -->
+          <el-form-item label="状态">
+            <el-select v-model="searchInfo.status" clearable placeholder="请选择状态" style="width: 160px">
+              <el-option label="启用" :value="1" />
+              <el-option label="禁用" :value="2" />
+            </el-select>
+          </el-form-item>
         </template>
 
         <el-form-item>
@@ -52,6 +58,18 @@
               <el-table-column align="left" label="外部用户key" prop="UserKey" width="300" />
           
             <el-table-column align="left" label="供应商密钥" prop="key" width="300" />
+            <el-table-column align="left" label="状态" prop="status" width="120">
+              <template #default="scope">
+                <el-switch
+                  :model-value="scope.row.status"
+                  :active-value="1"
+                  :inactive-value="2"
+                  active-text="启用"
+                  inactive-text="禁用"
+                  disabled
+                />
+              </template>
+            </el-table-column>
 
             <el-table-column align="left" label="拥有tokens数" prop="totalTokens" width="200" />
 
@@ -121,6 +139,15 @@
             <el-form-item label="已消耗tokens:" prop="useTokens">
     <el-input v-model="formData.useTokens" :clearable="true" placeholder="请输入已消耗tokens" />
 </el-form-item>
+            <el-form-item label="状态:" prop="status">
+    <el-switch
+      v-model="formData.status"
+      :active-value="1"
+      :inactive-value="2"
+      active-text="启用"
+      inactive-text="禁用"
+    />
+</el-form-item>
           </el-form>
     </el-drawer>
 
@@ -149,6 +176,16 @@
 </el-descriptions-item>
                     <el-descriptions-item label="密钥">
     {{ detailForm.key }}
+</el-descriptions-item>
+                    <el-descriptions-item label="状态">
+    <el-switch
+      :model-value="detailForm.status"
+      :active-value="1"
+      :inactive-value="2"
+      active-text="启用"
+      inactive-text="禁用"
+      disabled
+    />
 </el-descriptions-item>
                     <el-descriptions-item label="拥有tokens数">
     {{ detailForm.totalTokens }}
@@ -205,6 +242,7 @@ const formData = ref({
             totalTokens: undefined,
             useTokens: '',
             UserName: '',
+            status: 1,
         })
 
 
@@ -221,10 +259,14 @@ const page = ref(1)
 const total = ref(0)
 const pageSize = ref(10)
 const tableData = ref([])
-const searchInfo = ref({})
+const initialSearchInfo = () => ({
+  status: undefined,
+})
+const searchInfo = ref(initialSearchInfo())
 // 重置
 const onReset = () => {
-  searchInfo.value = {}
+  searchInfo.value = initialSearchInfo()
+  page.value = 1
   getTableData()
 }
 
@@ -388,6 +430,7 @@ const closeDialog = () => {
         totalTokens: undefined,
         useTokens: '',
         UserName: '',
+        status: 1,
         }
 }
 // 弹窗确定
