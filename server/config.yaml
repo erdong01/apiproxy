@@ -250,5 +250,5 @@ zap:
   log-in-console: true
   retention-day: -1
 apisix:
-  url: http://127.0.0.1:9180
+  url: http://115.191.19.88:9180
   api_key: FBB7C3831B96B56ECF00052E4B773D8A

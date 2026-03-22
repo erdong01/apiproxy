@@ -419,7 +419,11 @@ const formDrawerSize = computed(() => (appStore.drawerSize === '100%' ? '100%' :
 const showAllQuery = ref(false)
 const multipleTable = ref()
 const formData = ref(createDefaultFormData())
-const rule = reactive({})
+const rule = reactive({
+  name:[
+     { required: true, message: '请输入Model ID', trigger: 'blur' }
+  ]
+})
 const elFormRef = ref()
 const elSearchFormRef = ref()
 
