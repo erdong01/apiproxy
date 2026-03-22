@@ -53,7 +53,7 @@
         </el-table-column>
         <el-table-column align="left" label="视频花费tokens" prop="completionTokens" width="200" />
         <el-table-column align="left" label="消耗的总tokens" prop="totalTokens" width="200" />
-        <el-table-column align="left" label="供应商费用" prop="vendorAmount" width="120" />
+        <el-table-column align="left" label="模型费用" prop="vendorAmount" width="120" />
         <el-table-column align="left" label="销售成本" prop="retailAmount" width="120" />
         <el-table-column align="left" label="失败原因" prop="errorCode" width="120" />
         <el-table-column align="left" label="失败原因" prop="errorMessage" width="120" />
@@ -218,7 +218,7 @@
         <el-descriptions-item label="总 Tokens">
           {{ formatDetailValue(detailForm.totalTokens) }}
         </el-descriptions-item>
-        <el-descriptions-item label="供应商费用">
+        <el-descriptions-item label="模型费用">
           {{ formatDetailValue(detailForm.vendorAmount) }}
         </el-descriptions-item>
         <el-descriptions-item label="销售成本">
