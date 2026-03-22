@@ -1,5 +1,9 @@
 # gin-vue-admin web
+docker build --platform linux/amd64 -t registry.cn-hangzhou.aliyuncs.com/panqu/apisixadmin_web:1.0.0 .
 
+docker push registry.cn-hangzhou.aliyuncs.com/panqu/apisixadmin_web:1.0.0
+
+docker pull registry.cn-hangzhou.aliyuncs.com/panqu/apisixadmin_web:1.0.0
 ## Project setup
 
 ```

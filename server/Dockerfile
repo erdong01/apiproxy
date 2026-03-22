@@ -12,7 +12,7 @@ RUN go env -w GO111MODULE=on \
 
 FROM alpine:latest
 
-LABEL MAINTAINER="SliverHorn@sliver_horn@qq.com"
+LABEL MAINTAINER="mi@panqu.com"
 # 设置时区
 ENV TZ=Asia/Shanghai
 RUN apk update && apk add --no-cache tzdata openntpd \
