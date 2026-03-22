@@ -6,7 +6,6 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/core"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/initialize"
-	"github.com/flipped-aurora/gin-vue-admin/server/lib/apisix"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils/schedule"
 	_ "go.uber.org/automaxprocs"
 	"go.uber.org/zap"
@@ -37,7 +36,6 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	schedule.Init(ctx)
-	apisix.Init()
 	// 运行服务器
 	core.RunServer()
 }

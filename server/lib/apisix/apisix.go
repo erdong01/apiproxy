@@ -5,25 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/erdong01/kit/httpClient"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 )
 
-var client *httpClient.HttpClient
-
-func Init() {
-	cfg := global.GVA_CONFIG.Apisix
-	client = httpClient.New(cfg.Url)
-	h := make(http.Header)
-	h.Set("X-API-KEY", cfg.ApiKey)
-	client.Header = h
-}
-
 func DELETEConsumers(username string) error {
 	cfg := global.GVA_CONFIG.Apisix
-	deleteURL := strings.TrimRight(cfg.Url, "/") + "/" + url.PathEscape(username)
+	deleteURL := consumersURL(cfg.Url, username)
 
 	deleteClient := httpClient.New(deleteURL)
 	h := make(http.Header)
@@ -74,8 +63,14 @@ func POSTConsumers(username, apiKey, userKey string) error {
 	if err != nil {
 		return err
 	}
+	cfg := global.GVA_CONFIG.Apisix
+	putURL := consumersURL(cfg.Url, username)
 
-	res := client.POST(b)
+	client := httpClient.New(putURL)
+	h := make(http.Header)
+	h.Set("X-API-KEY", cfg.ApiKey)
+	client.Header = h
+	res := client.SetMethod(http.MethodPut).Do(b)
 	if res.Err != nil {
 		return res.Err
 	}
@@ -84,4 +79,50 @@ func POSTConsumers(username, apiKey, userKey string) error {
 	}
 
 	return nil
+}
+
+func consumersURL(base string, paths ...string) string {
+	u, err := url.Parse(base)
+	if err != nil {
+		return ""
+	}
+
+	adminPath := "/apisix/admin/consumers"
+	if !hasConsumersPath(u.Path) {
+		u.Path = joinURLPath(u.Path, adminPath)
+	}
+	for _, p := range paths {
+		u.Path = joinURLPath(u.Path, url.PathEscape(p))
+	}
+	return u.String()
+}
+
+func hasConsumersPath(path string) bool {
+	return path == "/apisix/admin/consumers" || path == "/apisix/admin/consumers/"
+}
+
+func joinURLPath(base, elem string) string {
+	base = trimTrailingSlash(base)
+	elem = trimLeadingSlash(elem)
+	if base == "" {
+		return "/" + elem
+	}
+	if elem == "" {
+		return base
+	}
+	return base + "/" + elem
+}
+
+func trimLeadingSlash(s string) string {
+	for len(s) > 0 && s[0] == '/' {
+		s = s[1:]
+	}
+	return s
+}
+
+func trimTrailingSlash(s string) string {
+	for len(s) > 0 && s[len(s)-1] == '/' {
+		s = s[:len(s)-1]
+	}
+	return s
 }
