@@ -30,7 +30,10 @@ func DELETEConsumers(username string) error {
 	return nil
 }
 
-func POSTConsumers(username, apiKey, userKey string) error {
+func POSTConsumers(username, apiKey, userKey string, rate int) error {
+	if rate == 0 {
+		rate = 5
+	}
 	reqData := map[string]interface{}{
 		"username": username,
 		"plugins": map[string]interface{}{
@@ -50,7 +53,7 @@ func POSTConsumers(username, apiKey, userKey string) error {
 				},
 			},
 			"limit-req": map[string]interface{}{
-				"rate":          5,
+				"rate":          rate,
 				"burst":         2,
 				"rejected_code": 429,
 				"key_type":      "var",

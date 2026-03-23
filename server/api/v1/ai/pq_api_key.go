@@ -44,7 +44,7 @@ func (pqApiKeyApi *PqApiKeyApi) CreatePqApiKey(c *gin.Context) {
 		response.FailWithMessage("创建失败:"+err.Error(), c)
 		return
 	}
-	apisix.POSTConsumers(pqApiKey.UserName, *pqApiKey.Key, *pqApiKey.UserKey)
+	apisix.POSTConsumers(pqApiKey.UserName, *pqApiKey.Key, *pqApiKey.UserKey, pqApiKey.Rate)
 	response.OkWithMessage("创建成功", c)
 }
 
@@ -129,7 +129,7 @@ func (pqApiKeyApi *PqApiKeyApi) UpdatePqApiKey(c *gin.Context) {
 	}
 
 	if pqApiKey.Status == 1 {
-		if err := apisix.POSTConsumers(pqApiKey.UserName, *pqApiKey.Key, *pqApiKey.UserKey); err != nil {
+		if err := apisix.POSTConsumers(pqApiKey.UserName, *pqApiKey.Key, *pqApiKey.UserKey, pqApiKey.Rate); err != nil {
 			global.GVA_LOG.Error("创建/更新 APISIX consumer 失败!", zap.Error(err), zap.String("username", pqApiKey.UserName))
 		}
 	} else if pqApiKey.Status == 2 {

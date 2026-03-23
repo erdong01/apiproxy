@@ -51,14 +51,13 @@
         <el-table-column align="left" label="用户名" prop="UserName" width="200" />
         <el-table-column align="left" label="用户key" prop="UserKey" width="300" />
         <el-table-column align="left" label="调用模型KEY" prop="key" width="300" />
-        <el-table-column align="left" label="状态" prop="status" width="120">
+        <el-table-column align="left" label="状态" prop="status" width="150">
           <template #default="scope">
             <el-switch v-model="scope.row.status" :loading="switchLoadingMap[scope.row.id]" :active-value="1"
-              :inactive-value="2" active-text="启用" inactive-text="禁用"
-              @change="() => handleStatusSwitch(scope.row)" />
+              :inactive-value="2" active-text="启用" inactive-text="禁用" @change="() => handleStatusSwitch(scope.row)" />
           </template>
         </el-table-column>
-
+        <el-table-column align="left" label="速率" prop="rate" width="120" />
         <!-- <el-table-column align="left" label="拥有tokens数" prop="totalTokens" width="200" /> -->
 
         <!-- <el-table-column align="left" label="已消耗tokens" prop="useTokens" width="200" /> -->
@@ -129,11 +128,15 @@
         <!-- <el-form-item label="已消耗tokens:" prop="useTokens">
     <el-input v-model="formData.useTokens" :clearable="true" placeholder="请输入已消耗tokens" />
 </el-form-item> -->
+        <el-form-item label="速率:" prop="rate">
+          <el-input v-model.number="formData.rate" :type="number" :clearable="true" placeholder="请输入速率" />
+        </el-form-item>
         <el-form-item label="状态:" prop="status">
           <el-switch v-model="formData.status" :active-value="1" :inactive-value="2" active-text="启用"
             inactive-text="禁用" />
         </el-form-item>
       </el-form>
+
     </el-drawer>
 
     <el-drawer destroy-on-close :size="appStore.drawerSize" v-model="detailShow" :show-close="true"
@@ -169,6 +172,9 @@
         <el-descriptions-item label="状态">
           <el-switch :model-value="detailForm.status" :active-value="1" :inactive-value="2" active-text="启用"
             inactive-text="禁用" disabled />
+        </el-descriptions-item>
+        <el-descriptions-item label="速率">
+          {{ detailForm.rate }}
         </el-descriptions-item>
         <!-- <el-descriptions-item label="拥有tokens数">
           {{ detailForm.totalTokens }}
@@ -226,6 +232,7 @@ const formData = ref({
   useTokens: '',
   UserName: '',
   status: 1,
+  rate:0
 })
 
 
@@ -240,6 +247,9 @@ const rule = reactive({
   ],
   key: [
     { required: true, message: '请输入调用模型KEY', trigger: 'blur' }
+  ],
+  rate: [
+    { required: true, message: '请输入速率', trigger: 'blur' }
   ]
 })
 
