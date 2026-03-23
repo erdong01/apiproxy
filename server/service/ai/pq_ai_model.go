@@ -119,7 +119,7 @@ func (pqAiModelService *PqAiModelService) GetPqAiModelInfoList(ctx context.Conte
 		db = db.Limit(limit).Offset(offset)
 	}
 
-	err = db.Preload("PqAiModelPrice").Find(&pqAiModels).Error
+	err = db.Preload("PqAiModelPrice").Order("id DESC").Find(&pqAiModels).Error
 	return pqAiModels, total, err
 }
 

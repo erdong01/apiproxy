@@ -2,6 +2,7 @@ package ai
 
 import (
 	"context"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/ai"
 	aiReq "github.com/flipped-aurora/gin-vue-admin/server/model/ai/request"
@@ -65,7 +66,7 @@ func (pqApiKeyService *PqApiKeyService) GetPqApiKeyInfoList(ctx context.Context,
 		db = db.Limit(limit).Offset(offset)
 	}
 
-	err = db.Find(&pqApiKeys).Error
+	err = db.Order("id DESC").Find(&pqApiKeys).Error
 	return pqApiKeys, total, err
 }
 

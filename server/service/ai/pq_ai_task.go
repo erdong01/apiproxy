@@ -72,7 +72,7 @@ func (pqAiTaskService *PqAiTaskService) GetPqAiTaskInfoList(ctx context.Context,
 		db = db.Limit(limit).Offset(offset)
 	}
 
-	err = db.Find(&pqAiTasks).Error
+	err = db.Order("id DESC").Find(&pqAiTasks).Error
 	return pqAiTasks, total, err
 }
 

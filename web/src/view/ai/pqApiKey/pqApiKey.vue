@@ -117,7 +117,11 @@
           <el-input v-model="formData.UserName" :maxlength="64" :clearable="true" placeholder="请输入用户名" />
         </el-form-item>
         <el-form-item label="用户KEY:" prop="UserKey">
-          <el-input v-model="formData.UserKey" :maxlength="64" :clearable="true" placeholder="请输入密钥" />
+          <el-input v-model="formData.UserKey" :maxlength="64" :clearable="true" placeholder="请输入密钥">
+            <template #append>
+              <el-button @click="generateUserKey">随机生成</el-button>
+            </template>
+          </el-input>
         </el-form-item>
         <el-form-item label="调用模型KEY:" prop="key">
           <el-input v-model="formData.key" :clearable="true" :maxlength="64" placeholder="请输入密钥" />
@@ -220,6 +224,8 @@ const appStore = useAppStore()
 const showAllQuery = ref(false)
 
 // 自动化生成的字典（可能为空）以及字段
+const generateUuid = () => crypto.randomUUID()
+
 const formData = ref({
   id: undefined,
   updatedAt: new Date(),
@@ -231,6 +237,7 @@ const formData = ref({
   totalTokens: undefined,
   useTokens: '',
   UserName: '',
+  UserKey: generateUuid(),
   status: 1,
   rate:0
 })
@@ -443,9 +450,14 @@ const deletePqApiKeyFunc = async (row) => {
 // 弹窗控制标记
 const dialogFormVisible = ref(false)
 
+const generateUserKey = () => {
+  formData.value.UserKey = generateUuid()
+}
+
 // 打开弹窗
 const openDialog = () => {
   type.value = 'create'
+  generateUserKey()
   dialogFormVisible.value = true
 }
 
@@ -463,7 +475,9 @@ const closeDialog = () => {
     totalTokens: undefined,
     useTokens: '',
     UserName: '',
+    UserKey: generateUuid(),
     status: 1,
+    rate: 0,
   }
 }
 // 弹窗确定

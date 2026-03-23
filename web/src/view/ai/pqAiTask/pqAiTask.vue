@@ -43,8 +43,8 @@
         <el-table-column type="selection" width="55" />
         <!-- <el-table-column align="left" label="id" prop="id" width="120" /> -->
         <el-table-column align="left" label="任务id" prop="generateTaskId" width="220" />
-        <el-table-column align="left" label="模型" prop="model" width="220" />
-        <el-table-column align="left" label="状态" prop="status" width="140">
+        <el-table-column align="left" label="模型" prop="model" width="200" />
+        <el-table-column align="left" label="状态" prop="status" width="120">
           <template #default="{ row }">
             <el-tag :type="getStatusTagType(row.status)" effect="light">
               {{ getStatusLabel(row.status) }}
@@ -58,6 +58,11 @@
         <el-table-column align="left" label="失败原因" prop="errorCode" width="120" />
         <el-table-column align="left" label="失败原因" prop="errorMessage" width="120" />
         <el-table-column align="left" label="key字段" prop="key" width="120" />
+        <el-table-column align="left" label="含参考视频" width="180">
+          <template #default="{ row }">
+            {{ row.draft_task_id || row.draftTaskId ? '是' : '否' }}
+          </template>
+        </el-table-column>
         <el-table-column align="left" label="操作" fixed="right" :min-width="appStore.operateMinWith">
           <template #default="scope">
             <el-button type="primary" link class="table-button" @click="getDetails(scope.row)"><el-icon
