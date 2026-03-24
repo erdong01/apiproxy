@@ -68,7 +68,7 @@ var ModelPriceMap = map[string]map[string]ModelPrice{
 	},
 }
 
-// 计算每秒平均成本
+// 计算火山费用
 func Calculate(model string, contentType string, tokens int64) (price float64) {
 	if modelPrice, ok := ModelPriceMap[model][contentType]; ok {
 		dTokens := decimal.NewFromInt(tokens)
@@ -117,16 +117,35 @@ var PanQuModelPriceMap = map[string]map[string]PanQuModelPrice{
 	},
 }
 
-func PanQuModelPriceCalculate(model string, resolution string, draft_task_id string, duration int64) (price float64) {
+func PanQuModelPriceCalculate(model string, resolution string, draft_task_id string, duration int64, draftVideoDuration int64) (price float64) {
 	if draft_task_id != "" {
-		model = model + "_draft_task"
-	}
-	if modelPrice, ok := PanQuModelPriceMap[model][resolution]; ok {
-		duration := decimal.NewFromInt(duration)
-		dPrice := decimal.NewFromFloat(modelPrice.Price)
+		draftModelPrice := resolution + "_draft_task"
+		var totalPrice float64
+		var totalPrice2 decimal.Decimal
 
-		totalPrice, _ := duration.Mul(dPrice).Truncate(2).Float64()
+		if modelPrice, ok := PanQuModelPriceMap[model][resolution]; ok {
+			dDraftVideoDuration := decimal.NewFromInt(duration)
+			dPrice := decimal.NewFromFloat(modelPrice.Price)
+
+			totalPrice2 = dDraftVideoDuration.Mul(dPrice).Truncate(2)
+		}
+
+		if modelPrice, ok := PanQuModelPriceMap[model][draftModelPrice]; ok {
+			dDraftVideoDuration := decimal.NewFromInt(draftVideoDuration)
+			dPrice := decimal.NewFromFloat(modelPrice.Price)
+
+			totalPrice, _ = dDraftVideoDuration.Mul(dPrice).Add(totalPrice2).Truncate(2).Float64()
+		}
+
 		return totalPrice
+	} else {
+		if modelPrice, ok := PanQuModelPriceMap[model][resolution]; ok {
+			duration := decimal.NewFromInt(duration)
+			dPrice := decimal.NewFromFloat(modelPrice.Price)
+
+			totalPrice, _ := duration.Mul(dPrice).Truncate(2).Float64()
+			return totalPrice
+		}
 	}
 
 	return

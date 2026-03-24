@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	queryArkTask("cgt-20260318033527-kf6pn", "3c2605da-c453-4c9a-8ced-dfb7835b979d")
+	queryArkTask("cgt-20260323180143-wwsjr", "3c2605da-c453-4c9a-8ced-dfb7835b979d")
 }
 
 func queryArkTask(taskId, apiKey string) (*map[string]any, error) {

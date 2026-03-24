@@ -42,3 +42,7 @@ web/pnpm-lock.yaml
 *.db
 *.sqlite
 *.sqlite3
+
+# AI test export data
+/server/test/ai5/*.csv
+/server/test/ai6/*.csv

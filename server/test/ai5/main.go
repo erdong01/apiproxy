@@ -23,7 +23,152 @@ const (
 	defaultStatus   = "succeeded"
 	defaultPageNum  = 1
 	defaultPageSize = 500
+	defaultDate     = "2026-03-21"
 )
+
+// 加时间区间 go run main.go "2026-03-21 00:00:00" "2026-03-24 00:00:00"
+// 生成视频价格区间
+func main() {
+	apiKey := "3c2605da-c453-4c9a-8ced-dfb7835b979d"
+	if apiKey == "" {
+		fmt.Fprintln(os.Stderr, "ARK_API_KEY environment variable is required")
+		os.Exit(1)
+	}
+
+	startAt, endAt, err := resolveTimeRange()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "resolve time range failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	tasks, err := fetchAllTasks(apiKey, defaultStatus, defaultPageSize, startAt, endAt)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "fetch tasks failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	results, skipped := buildStatistics(tasks)
+	if len(skipped) > 0 {
+		fmt.Fprintf(os.Stderr, "skipped %d tasks due to missing duration/resolution or unsupported pricing\n", len(skipped))
+	}
+	if maxTokenTask, ok := findMaxTokenTask(tasks); ok {
+		fmt.Printf("max token task: id=%s model=%s status=%s createdAt=%s totalTokens=%d resolution=%s duration=%s draftTaskId=%s\n",
+			maxTokenTask.ID,
+			maxTokenTask.Model,
+			maxTokenTask.Status,
+			formatUnixTime(maxTokenTask.CreatedAt),
+			maxTokenTask.Usage.TotalTokens,
+			maxTokenTask.Resolution,
+			formatTaskDuration(maxTokenTask),
+			maxTokenTask.DraftTaskId,
+		)
+	}
+	if maxCostTask, maxCostPerSecond, totalPrice, duration, ok := findMaxCostPerSecondTask(tasks); ok {
+		fmt.Printf("max cost task: id=%s model=%s status=%s createdAt=%s totalTokens=%d totalPrice=%s duration=%s costPerSecond=%s resolution=%s generateAudio=%t draftTaskId=%s\n",
+			maxCostTask.ID,
+			maxCostTask.Model,
+			maxCostTask.Status,
+			formatUnixTime(maxCostTask.CreatedAt),
+			maxCostTask.Usage.TotalTokens,
+			formatFloat(totalPrice),
+			formatFloat(duration),
+			formatFloat(maxCostPerSecond),
+			maxCostTask.Resolution,
+			boolValue(maxCostTask.GenerateAudio),
+			maxCostTask.DraftTaskId,
+		)
+	}
+
+	output, err := json.MarshalIndent(results, "", "  ")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "marshal results failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := writeResultsCSV(results); err != nil {
+		fmt.Fprintf(os.Stderr, "write csv failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(string(output))
+}
+
+func resolveTimeRange() (startAt, endAt *time.Time, err error) {
+	args := os.Args[1:]
+	if len(args) == 0 || strings.TrimSpace(args[0]) == "" {
+		return buildDayRange(defaultDate)
+	}
+
+	if len(args) == 1 {
+		return buildDayRange(strings.TrimSpace(args[0]))
+	}
+
+	startAt, err = parseDateTimeArg(args[0])
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid start time %q: %w", args[0], err)
+	}
+
+	endAt, err = parseDateTimeArg(args[1])
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid end time %q: %w", args[1], err)
+	}
+
+	if !startAt.Before(*endAt) {
+		return nil, nil, fmt.Errorf("start time must be earlier than end time")
+	}
+
+	return startAt, endAt, nil
+}
+
+func buildDayRange(date string) (startAt, endAt *time.Time, err error) {
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	start, err := time.ParseInLocation("2006-01-02", strings.TrimSpace(date), loc)
+	if err != nil {
+		return nil, nil, fmt.Errorf("date must use YYYY-MM-DD")
+	}
+
+	end := start.Add(24 * time.Hour)
+	return &start, &end, nil
+}
+
+func parseDateTimeArg(value string) (*time.Time, error) {
+	text := strings.TrimSpace(value)
+	if text == "" {
+		return nil, fmt.Errorf("empty value")
+	}
+
+	layouts := []string{
+		time.RFC3339,
+		"2006-01-02 15:04:05",
+		"2006-01-02 15:04",
+		"2006-01-02",
+	}
+
+	for _, layout := range layouts {
+		var (
+			t   time.Time
+			err error
+		)
+		if layout == "2006-01-02 15:04:05" || layout == "2006-01-02 15:04" || layout == "2006-01-02" {
+			loc, locErr := time.LoadLocation("Asia/Shanghai")
+			if locErr != nil {
+				return nil, locErr
+			}
+			t, err = time.ParseInLocation(layout, text, loc)
+		} else {
+			t, err = time.Parse(layout, text)
+		}
+		if err == nil {
+			return &t, nil
+		}
+	}
+
+	return nil, fmt.Errorf("supported formats: RFC3339, YYYY-MM-DD HH:MM:SS, YYYY-MM-DD HH:MM, YYYY-MM-DD")
+}
 
 type Usage struct {
 	CompletionTokens int64 `json:"completion_tokens"` //模型输出视频花费的 token 数量。
@@ -34,10 +179,12 @@ type Tasks struct {
 	ID              string      `json:"id"`         // 视频生成任务 ID。
 	Model           string      `json:"model"`      // 任务使用的模型名称和版本。
 	Status          string      `json:"status"`     //任务状态
+	CreatedAt       int64       `json:"created_at"` //任务创建时间，Unix 时间戳（秒）
 	Resolution      string      `json:"resolution"` //生成视频的分辨率。
 	Duration        interface{} `json:"duration"`   //生成视频的时长，单位：秒。
 	Frames          interface{} `json:"frames"`     //生成视频的帧数。
 	FramesPerSecond interface{} `json:"framespersecond"`
+	GenerateAudio   *bool       `json:"generate_audio"`
 	Usage           Usage       `json:"usage"`         //本次请求的 token 用量。
 	DraftTaskId     string      `json:"draft_task_id"` //Draft 参考视频任务 ID。基于 Draft 视频生成正式视频时，会返回该参数。
 }
@@ -97,46 +244,14 @@ type groupMetrics struct {
 	withDraft    []taskMetric
 }
 
-func main() {
-	apiKey := "3c2605da-c453-4c9a-8ced-dfb7835b979d"
-	if apiKey == "" {
-		fmt.Fprintln(os.Stderr, "ARK_API_KEY environment variable is required")
-		os.Exit(1)
-	}
-
-	tasks, err := fetchAllTasks(apiKey, defaultStatus, defaultPageSize)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "fetch tasks failed: %v\n", err)
-		os.Exit(1)
-	}
-
-	results, skipped := buildStatistics(tasks)
-	if len(skipped) > 0 {
-		fmt.Fprintf(os.Stderr, "skipped %d tasks due to missing duration/resolution or unsupported pricing\n", len(skipped))
-	}
-
-	output, err := json.MarshalIndent(results, "", "  ")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "marshal results failed: %v\n", err)
-		os.Exit(1)
-	}
-
-	if err := writeResultsCSV(results); err != nil {
-		fmt.Fprintf(os.Stderr, "write csv failed: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Println(string(output))
-}
-
-func fetchAllTasks(apiKey, status string, pageSize int) ([]Tasks, error) {
+func fetchAllTasks(apiKey, status string, pageSize int, startAt, endAt *time.Time) ([]Tasks, error) {
 	client := &http.Client{Timeout: 30 * time.Second}
 	pageNum := defaultPageNum
 	var all []Tasks
 	total := -1
 
 	for {
-		resp, err := fetchTaskPage(client, apiKey, status, pageNum, pageSize)
+		resp, err := fetchTaskPage(client, apiKey, status, pageNum, pageSize, startAt, endAt)
 		if err != nil {
 			return nil, err
 		}
@@ -145,7 +260,7 @@ func fetchAllTasks(apiKey, status string, pageSize int) ([]Tasks, error) {
 			total = resp.Total
 		}
 
-		all = append(all, resp.Items...)
+		all = append(all, filterTasksByCreatedAt(resp.Items, startAt, endAt)...)
 		if len(resp.Items) == 0 || len(all) >= resp.Total {
 			break
 		}
@@ -156,7 +271,7 @@ func fetchAllTasks(apiKey, status string, pageSize int) ([]Tasks, error) {
 	return all, nil
 }
 
-func fetchTaskPage(client *http.Client, apiKey, status string, pageNum, pageSize int) (*listTasksResponse, error) {
+func fetchTaskPage(client *http.Client, apiKey, status string, pageNum, pageSize int, startAt, endAt *time.Time) (*listTasksResponse, error) {
 	query := url.Values{}
 	query.Set("page_num", strconv.Itoa(pageNum))
 	query.Set("page_size", strconv.Itoa(pageSize))
@@ -193,6 +308,111 @@ func fetchTaskPage(client *http.Client, apiKey, status string, pageNum, pageSize
 	}
 
 	return &result, nil
+}
+
+func filterTasksByCreatedAt(tasks []Tasks, startAt, endAt *time.Time) []Tasks {
+	if startAt == nil && endAt == nil {
+		return tasks
+	}
+
+	filtered := make([]Tasks, 0, len(tasks))
+	for _, task := range tasks {
+		if task.CreatedAt <= 0 {
+			continue
+		}
+
+		createdAt := time.Unix(task.CreatedAt, 0)
+		if startAt != nil && createdAt.Before(*startAt) {
+			continue
+		}
+		if endAt != nil && !createdAt.Before(*endAt) {
+			continue
+		}
+
+		filtered = append(filtered, task)
+	}
+
+	return filtered
+}
+
+func findMaxTokenTask(tasks []Tasks) (Tasks, bool) {
+	if len(tasks) == 0 {
+		return Tasks{}, false
+	}
+
+	maxTask := tasks[0]
+	found := false
+	for _, task := range tasks {
+		if !found || task.Usage.TotalTokens > maxTask.Usage.TotalTokens {
+			maxTask = task
+			found = true
+		}
+	}
+
+	return maxTask, found
+}
+
+func findMaxCostPerSecondTask(tasks []Tasks) (Tasks, float64, float64, float64, bool) {
+	var (
+		maxTask          Tasks
+		maxCostPerSecond float64
+		maxTotalPrice    float64
+		maxDuration      float64
+		found            bool
+	)
+
+	for _, task := range tasks {
+		duration, ok := extractDurationSeconds(task)
+		if !ok || duration <= 0 {
+			continue
+		}
+
+		contentType := "text"
+		if strings.TrimSpace(task.DraftTaskId) != "" {
+			contentType = "draft_task"
+		}
+
+		totalPrice := ai.Calculate(task.Model, contentType, task.Usage.TotalTokens)
+		if totalPrice <= 0 {
+			continue
+		}
+
+		costPerSecond := roundTo(totalPrice / duration)
+		if !found || costPerSecond > maxCostPerSecond {
+			maxTask = task
+			maxCostPerSecond = costPerSecond
+			maxTotalPrice = totalPrice
+			maxDuration = duration
+			found = true
+		}
+	}
+
+	return maxTask, maxCostPerSecond, maxTotalPrice, maxDuration, found
+}
+
+func formatUnixTime(ts int64) string {
+	if ts <= 0 {
+		return ""
+	}
+
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		return time.Unix(ts, 0).Format(time.DateTime)
+	}
+
+	return time.Unix(ts, 0).In(loc).Format(time.DateTime)
+}
+
+func formatTaskDuration(task Tasks) string {
+	duration, ok := extractDurationSeconds(task)
+	if !ok {
+		return ""
+	}
+	return formatFloat(duration)
+}
+
+func boolValue(v *bool) bool {
+	return v != nil && *v
 }
 
 func buildStatistics(tasks []Tasks) ([]ModelResolutionStatisticalResults, []string) {
