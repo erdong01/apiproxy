@@ -54,7 +54,7 @@ func POSTConsumers(username, apiKey, userKey string, rate int) error {
 			},
 			"limit-req": map[string]interface{}{
 				"rate":          rate,
-				"burst":         2,
+				"burst":         5,
 				"rejected_code": 429,
 				"key_type":      "var",
 				"key":           "consumer_name",

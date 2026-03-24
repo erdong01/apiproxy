@@ -55,14 +55,14 @@
         <el-table-column align="left" label="消耗的总tokens" prop="totalTokens" width="200" />
         <el-table-column align="left" label="模型费用" prop="vendorAmount" width="120" />
         <el-table-column align="left" label="销售成本" prop="retailAmount" width="120" />
-        <el-table-column align="left" label="失败原因" prop="errorCode" width="120" />
-        <el-table-column align="left" label="失败原因" prop="errorMessage" width="120" />
-        <el-table-column align="left" label="key字段" prop="key" width="120" />
         <el-table-column align="left" label="含参考视频" width="180">
           <template #default="{ row }">
             {{ row.draft_task_id || row.draftTaskId ? '是' : '否' }}
           </template>
         </el-table-column>
+        <el-table-column align="left" label="key字段" prop="key" width="220" />
+        <el-table-column align="left" label="失败原因" prop="errorCode" width="120" />
+        <el-table-column align="left" label="失败原因" prop="errorMessage" width="500" />
         <el-table-column align="left" label="操作" fixed="right" :min-width="appStore.operateMinWith">
           <template #default="scope">
             <el-button type="primary" link class="table-button" @click="getDetails(scope.row)"><el-icon

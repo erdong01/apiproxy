@@ -52,11 +52,11 @@
 | `--timer` | timer | 定时器接口封装 |
 | `--upload`      | oss                  | oss接口封装        |
 
-docker build --platform linux/amd64 -t registry.cn-hangzhou.aliyuncs.com/panqu/apisixadmin_api:1.0.7 .
+docker build --platform linux/amd64 -t registry.cn-hangzhou.aliyuncs.com/panqu/apisixadmin_api:1.0.8 .
 
-docker push registry.cn-hangzhou.aliyuncs.com/panqu/apisixadmin_api:1.0.7
+docker push registry.cn-hangzhou.aliyuncs.com/panqu/apisixadmin_api:1.0.8
 
-docker pull registry.cn-hangzhou.aliyuncs.com/panqu/apisixadmin_api:1.0.7
+docker pull registry.cn-hangzhou.aliyuncs.com/panqu/apisixadmin_api:1.0.8
 
 docker stop apiSixAdminApi
 
@@ -66,4 +66,4 @@ docker run -d -p 8888:8888 \
   --name apiSixAdminApi \
   --restart always \
   --network host \
-  registry.cn-hangzhou.aliyuncs.com/panqu/apisixadmin_api:1.0.7
+  registry.cn-hangzhou.aliyuncs.com/panqu/apisixadmin_api:1.0.8
